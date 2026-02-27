@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Статус системы{% endblock %}
+
+{% block content %}
+<div class="backup-management">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-bar"></i> Статус системы</h1>
+        <p class="subtitle">Обзор состояния приложения и хранилища данных</p>
+    </div>
+
+    <!-- Хранилище данных -->
+    <div class="card-section">
+        <div class="section-header">
+            <h2><i class="fas fa-database"></i> Хранилище данных</h2>
+        </div>
+
+        <div class="status-table-container">
+            <table class="backup-table status-table">
+                <thead>
+                    <tr>
+                        <th>Параметр</th>
+                        <th>Значение</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="status-param"><strong>Режим хранения</strong></td>
+                        <td class="status-value">{{ status.storage_mode }}</td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>Локальный файл</strong></td>
+                        <td class="status-value">
+                            {% if status.local_file_exists %}
+                                <span class="badge badge-local">
+                                    <i class="fas fa-check-circle"></i> Существует
+                                </span>
+                                ({{ status.local_file_size }})
+                            {% else %}
+                                <span class="badge badge-missing">
+                                    <i class="fas fa-times-circle"></i> Отсутствует
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr class="path-row">
+                        <td class="status-param"><strong>Путь к локальному файлу</strong></td>
+                        <td class="status-value path-value">
+                            <code class="file-path">{{ status.local_file_path }}</code>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>Яндекс.Диск</strong></td>
+                        <td class="status-value">
+                            {% if status.has_yandex %}
+                                {% if status.yandex_connected %}
+                                    <span class="badge badge-yandex">
+                                        <i class="fas fa-check-circle"></i> Подключен
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warning">
+                                        <i class="fas fa-exclamation-triangle"></i> Не подключен
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge badge-disabled">
+                                    <i class="fas fa-cloud-slash"></i> Не настроен
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>Всего карточек</strong></td>
+                        <td class="status-value"><strong>{{ status.total_cards }}</strong> (видимых: {{ status.visible_cards }}, скрытых: {{ status.hidden_cards }})</td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>Количество тем</strong></td>
+                        <td class="status-value">{{ status.themes_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>Количество версий</strong></td>
+                        <td class="status-value">{{ status.versions_count }}</td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>MAX_BACKUPS</strong></td>
+                        <td class="status-value">{{ max_backups }}</td>
+                    </tr>
+                    <tr>
+                        <td class="status-param"><strong>BACKUP_ON_START</strong></td>
+                        <td class="status-value">
+                            {% if backup_on_start %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Включено
+                                </span>
+                            {% else %}
+                                <span class="badge badge-secondary">
+                                    <i class="fas fa-times-circle"></i> Выключено
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Резервные копии -->
+    <div class="card-section">
+        <div class="section-header">
+            <h2><i class="fas fa-history"></i> Резервные копии</h2>
+        </div>
+
+        {% if backups %}
+        <div class="backup-list-table">
+            <table class="backup-table">
+                <thead>
+                    <tr>
+                        <th>Имя файла</th>
+                        <th>Источник</th>
+                        <th>Дата создания</th>
+                        <th>Карточек</th>
+                        <th>Размер</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr class="backup-item">
+                        <td class="backup-filename">
+                            <i class="fas fa-file-archive"></i>
+                            {{ backup.filename }}
+                        </td>
+                        <td class="backup-source">
+                            <span class="badge {% if backup.source == 'yandex' %}badge-yandex{% else %}badge-local{% endif %}">
+                                <i class="fas {% if backup.source == 'yandex' %}fa-cloud{% else %}fa-hdd{% endif %}"></i>
+                                {{ backup.source_display }}
+                            </span>
+                        </td>
+                        <td class="backup-date">{{ backup.date }}</td>
+                        <td class="backup-count">{{ backup.card_count }}</td>
+                        <td class="backup-size">{{ backup.size }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <h3>Нет доступных бэкапов</h3>
+            <p>Создайте первый бэкап, чтобы обезопасить свои данные</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Кнопки синхронизации -->
+    <div class="sync-controls card-section">
+        <h3><i class="fas fa-sync"></i> Управление синхронизацией</h3>
+
+        <div class="sync-buttons">
+            <form action="{{ url_for('sync_to_yandex') }}" method="POST" class="sync-form">
+                <button type="submit" class="btn btn-primary sync-btn">
+                    <i class="fas fa-upload"></i> Синхронизировать на Яндекс.Диск
+                </button>
+            </form>
+
+            <form action="{{ url_for('load_from_yandex') }}" method="POST" class="sync-form">
+                <button type="submit" class="btn btn-secondary sync-btn"
+                        onclick="return confirm('Внимание! Это заменит локальные данные версией с Яндекс.Диска. Продолжить?')">
+                    <i class="fas fa-download"></i> Загрузить с Яндекс.Диска
+                </button>
+            </form>
+        </div>
+
+        <div class="sync-info">
+            <div class="status-table-container">
+                <p><strong><i class="fas fa-info-circle"></i> Как работает синхронизация:</strong></p>
+                <ul>
+                    <li><strong>Изменения сохраняются только локально</strong> - при добавлении/редактировании карточек</li>
+                    <li><strong>"Синхронизировать на Яндекс.Диск"</strong> - отправляет локальные данные в облако (заменяет облачную версию)</li>
+                    <li><strong>"Загрузить с Яндекс.Диска"</strong> - загружает данные из облака (заменяет локальную версию)</li>
+                    <li><strong>Рекомендуется:</strong> Синхронизировать после важных изменений и загружать при переходе на другое устройство</li>
+                </ul>
+        </div>
+    </div>
+
+    <!-- Кнопки действий -->
+    <div class="action-buttons">
+        <a href="{{ url_for('backup_management') }}" class="btn btn-primary action-btn">
+            <i class="fas fa-database"></i> Управление бэкапами
+        </a>
+        <a href="{{ url_for('debug_storage') }}" class="btn btn-info action-btn">
+            <i class="fas fa-search"></i> Диагностика хранилища
+        </a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary action-btn">
+            <i class="fas fa-home"></i> На главную
+        </a>
+    </div>
+</div>
+{% endblock %}

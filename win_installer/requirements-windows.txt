@@ -1,0 +1,14 @@
+# Core dependencies
+Flask==3.1.2
+openpyxl==3.1.5
+python-dotenv==1.2.1
+Werkzeug==3.1.4
+requests==2.32.5
+
+# For backups
+python-dateutil>=2.9.0
+psutil>=7.2.1
+
+# Windows packaging
+pyinstaller==6.11.1
+pywin32==308
