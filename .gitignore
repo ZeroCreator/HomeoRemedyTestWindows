@@ -25,7 +25,6 @@ MANIFEST
 venv/
 env/
 ENV/
-.env/
 
 # IDE
 .vscode/
@@ -47,10 +46,23 @@ Thumbs.db
 *.log
 logs/
 
-
 # Environment variables
 .env
-.env.local
 
-test_cards.json
-/backups
+# Data files (user-generated)
+data/*.json
+backups/
+uploads/
+
+# Vercel build
+.vercel/
+
+# Qwen AI tools (development only)
+.qwen/commands/
+.specify/
+
+# Windows build artifacts
+win_installer/build/
+win_installer/dist/
+win_installer/Output/
+win_installer/venv/
